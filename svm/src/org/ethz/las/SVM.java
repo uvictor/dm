@@ -15,8 +15,23 @@ public class SVM {
    * Instantiates an SVM from a list of training instances, for a given
    * learning rate 'eta' and regularization parameter 'lambda'.
    */
+  // TODO: Check this code after PSGD is implemented
   public SVM(List<TrainingInstance> trainingSet, double lambda, double eta) {
-    // TODO: Implement me!
+    weights = new RealVector(trainingSet.get(0).getFeatureCount());
+    
+    for (TrainingInstance ti : trainingSet) {
+      double result = ti.getLabel() * weights.dotProduct(ti.getFeatures());
+
+      // if violates margin
+      if (result < 1) {
+        // gradient step
+        RealVector w = new RealVector(weights.getFeatures());
+        w.add(ti.getFeatures().scaleThis(eta * ti.getLabel()));
+        
+        // reprojection
+        weights = w.scaleThis(Math.min(1, 1 / (w.getNorm() * lambda)));
+      }
+    }
   }
 
   /**

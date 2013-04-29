@@ -16,7 +16,7 @@ public class PSGD {
   final static double LEARNING_RATE = 0.5;
 
   static Random randomGenerator = new Random();
-  
+
   /**
    * The Map class has to make sure that the data is shuffled to the various machines.
    */
