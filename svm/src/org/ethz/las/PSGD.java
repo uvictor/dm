@@ -15,7 +15,8 @@ public class PSGD {
   final static double LAMBDA = 0.3;
   final static double LEARNING_RATE = 0.5;
 
-
+  static Random randomGenerator = new Random();
+  
   /**
    * The Map class has to make sure that the data is shuffled to the various machines.
    */
@@ -25,7 +26,8 @@ public class PSGD {
      * Spread the data around on K different machines.
      */
     public void map(LongWritable key, Text value, OutputCollector<LongWritable, Text> output, Reporter reporter) throws IOException {
-      // TODO: implement me!
+      LongWritable outputKey = new LongWritable(randomGenerator.nextInt(K));
+      output.collect(outputKey, value);
     }
   }
 
