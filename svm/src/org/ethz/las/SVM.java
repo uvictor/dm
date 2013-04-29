@@ -29,6 +29,7 @@ public class SVM {
       double coef = sc.nextDouble();
       ll.add(coef);
     }
+    sc.close();
 
     double[] weights = new double[ll.size()];
     int cnt = 0;
@@ -54,7 +55,6 @@ public class SVM {
    * Given a training instance it returns the result of sign(weights'instanceFeatures).
    */
   public int classify(TrainingInstance ti) {
-    RealVector features = ti.getFeatures();
     double result = ti.getFeatures().dotProduct(this.weights);
     if (result >= 0) return 1;
     else return -1;

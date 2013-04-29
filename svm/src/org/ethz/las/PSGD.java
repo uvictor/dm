@@ -10,13 +10,15 @@ import java.io.*;
 import java.util.*;
 
 public class PSGD {
+  final static int K = 128;
+  final static double LAMBDA = 0.3;
+  final static double LEARNING_RATE = 0.5;
+
 
   /**
    * The Map class has to make sure that the data is shuffled to the various machines.
    */
   public static class Map extends MapReduceBase implements Mapper<LongWritable, Text, LongWritable, Text> {
-
-    final int K = CHOOSE_ME;
 
     /**
      * Spread the data around on K different machines.
@@ -43,7 +45,7 @@ public class PSGD {
         trainingSet.add(instance);
       }
 
-      SVM model = new SVM(trainingSet, CHOOSE_LEARNING_RATE, CHOOSE_LAMBDA);
+      SVM model = new SVM(trainingSet, LAMBDA, LEARNING_RATE);
 
       /**
        * null is important here since we don't want to do additional preprocessing
@@ -72,7 +74,7 @@ public class PSGD {
 
     // set to the same K as above for optimal performance on the cluster
     // If you don't, you will likely have timeout problems.
-    conf.setNumReduceTasks(int K);
+    conf.setNumReduceTasks(PSGD.K);
 
     FileInputFormat.setInputPaths(conf, new Path(args[0]));
     FileOutputFormat.setOutputPath(conf, new Path(args[1]));
