@@ -15,7 +15,6 @@ public class PSGD {
   final static double LAMBDA = 0.3;
   final static double LEARNING_RATE = 0.5;
 
-
   /**
    * The Map class has to make sure that the data is shuffled to the various machines.
    */
