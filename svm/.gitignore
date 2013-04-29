@@ -2,4 +2,5 @@
 .project
 .settings
 bin
-Solution.jar
+PSGD.jar
+output
