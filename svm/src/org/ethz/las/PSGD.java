@@ -10,6 +10,7 @@ import java.io.*;
 import java.util.*;
 
 public class PSGD {
+  // TODO: choose these three parameters
   final static int K = 128;
   final static double LAMBDA = 0.3;
   final static double LEARNING_RATE = 0.5;
@@ -24,6 +25,7 @@ public class PSGD {
      * Spread the data around on K different machines.
      */
     public void map(LongWritable key, Text value, OutputCollector<LongWritable, Text> output, Reporter reporter) throws IOException {
+      // TODO: implement me!
     }
   }
 
@@ -52,6 +54,7 @@ public class PSGD {
        * to remove the key. The value should be the SVM model (take a look at method
        * toString in SVM.java.
        */
+      Text outputValue = new Text();
       outputValue.set(model.toString());
       output.collect(null, outputValue);
     }
