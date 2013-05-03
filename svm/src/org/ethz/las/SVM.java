@@ -40,6 +40,7 @@ public class SVM {
   public SVM(String w) {
     List<Double> ll = new LinkedList<Double>();
     Scanner sc = new Scanner(w);
+    sc.useLocale(Locale.US);
     while(sc.hasNext()) {
       double coef = sc.nextDouble();
       ll.add(coef);

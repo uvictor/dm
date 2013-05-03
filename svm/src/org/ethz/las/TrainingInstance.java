@@ -1,6 +1,7 @@
 package org.ethz.las;
 
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.List;
 
@@ -25,16 +26,19 @@ class TrainingInstance {
    */
   public TrainingInstance(String s) {
     Scanner sc = new Scanner(s);
+    sc.useLocale(Locale.US);
     List<Double> parsedInput = new LinkedList<Double>();
 
+ 
     // Gets all tokens.
     while (sc.hasNextDouble())
       parsedInput.add(sc.nextDouble());
+    
     sc.close();
 
     // Last element is always the label.
     int n = parsedInput.size() - 1;
-
+    
     // Convert the tokens to feature vector and label.
     double [] coef = new double[n];
     int cnt = 0;

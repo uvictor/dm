@@ -11,7 +11,7 @@ import java.util.*;
 
 public class PSGD {
   // TODO: choose these three parameters
-  final static int K = 128;
+  final static int K = 64;
   final static double LAMBDA = 0.3;
   final static double LEARNING_RATE = 0.5;
 
