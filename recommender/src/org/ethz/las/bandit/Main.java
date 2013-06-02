@@ -16,12 +16,12 @@ public class Main {
   public static void main(String[] args) throws Exception {
 	
 	// You can hard-code the path as shown here, or you can use args to send the paths to files.
-	YahooLogLineReader reader = new YahooLogLineReader("PATH_TO_UNZIPPED_FOLDER/data/log.txt");
+	YahooLogLineReader reader = new YahooLogLineReader("../data/log.txt");
 
     FromFileLogLineGenerator<User, Article, Boolean> generator = 	
     		new FromFileLogLineGenerator<User, Article, Boolean>(reader);
 
-    ContextualBanditPolicy<User, Article, Boolean> policy = new MyPolicy("PATH_TO_UNZIPPED_FOLDER/data/articles.txt");
+    ContextualBanditPolicy<User, Article, Boolean> policy = new MyPolicy("../data/articles.txt");
 
     // Output log every 100 lines to standard output.
     EvaluationPolicy<User, Article, Boolean> evalPolicy = 
