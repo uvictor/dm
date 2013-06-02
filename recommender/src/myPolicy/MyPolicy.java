@@ -8,12 +8,11 @@ import org.ethz.las.bandit.policies.ContextualBanditPolicy;
 
 public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> {
 	private ContextualBanditPolicy<User, Article, Boolean> policy;
-	
-	
+
 	// Here you can load the article features.
 	public MyPolicy(String articleFilePath) {
-		policy = new DisjointPolicy(articleFilePath);
-		//policy = new HybridPolicy(articleFilePath);
+		// policy = new DisjointPolicy(articleFilePath);
+		policy = new HybridPolicy(articleFilePath);
 	}
 
 	@Override
