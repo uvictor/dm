@@ -15,22 +15,27 @@ import org.jblas.DoubleMatrix;
 import org.jblas.Solve;
 
 public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> {
+	private final static int INVERSE_STEPS = 5;
 	private final static int SIZE = 6;
-	private final static double ALFA = 0.5;
+	private final static double ALFA = 3;
 	private final static double EPS = 1e-6;
 	
 	private Random random;
+	private int inverseSteps;
 	
 	private HashMap<Integer, DoubleMatrix> x;
 	private HashMap<Integer, DoubleMatrix> A;
+	private HashMap<Integer, DoubleMatrix> invA;
 	private HashMap<Integer, DoubleMatrix> b;
 
 	// Here you can load the article features.
 	public MyPolicy(String articleFilePath) {
 		random = new Random();
+		inverseSteps = 0;
 		
 		x = new HashMap<Integer, DoubleMatrix>();
 		A = new HashMap<Integer, DoubleMatrix>();
+		invA = new HashMap<Integer, DoubleMatrix>();
 		b = new HashMap<Integer, DoubleMatrix>();
 
 		Scanner scan = null;
@@ -64,16 +69,18 @@ public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> 
 		for (Article article: possibleActions) {
 			if (!A.containsKey(article)) {
 				A.put(article.getID(), DoubleMatrix.eye(SIZE));
+				invA.put(article.getID(), DoubleMatrix.eye(SIZE));
 				b.put(article.getID(), DoubleMatrix.zeros(SIZE, 1));
 			}
-			DoubleMatrix Aa = A.get(article.getID());
+			
+			DoubleMatrix invAa = invA.get(article.getID());
 			DoubleMatrix ba = b.get(article.getID());
 			DoubleMatrix zt = new DoubleMatrix(visitor.getFeatures());
 			
-			DoubleMatrix w = Solve.solve(Aa, ba).transpose();
+			DoubleMatrix w = invAa.mmul(ba).transpose();
 			
 			double ucb = w.mmul(zt).get(0, 0);
-			ucb += ALFA * Math.sqrt(zt.transpose().mmul(Solve.solve(Aa, zt)).get(0, 0));
+			ucb += ALFA * Math.sqrt(zt.transpose().mmul(invAa).mmul(zt).get(0, 0));
 			
 			if (ucb > maxUcb) {
 				maxArticle = article;
@@ -106,5 +113,11 @@ public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> 
 		
 		zt = zt.mmul(zt.transpose());
 		Aa = Aa.add(zt);
+		
+		inverseSteps++;
+		if (inverseSteps >= INVERSE_STEPS) {
+			invA.put(a.getID(), Solve.solve(Aa, DoubleMatrix.eye(SIZE)));
+			inverseSteps = 0;
+		}
 	}
 }
