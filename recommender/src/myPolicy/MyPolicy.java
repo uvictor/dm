@@ -12,6 +12,7 @@ import org.ethz.las.bandit.logs.yahoo.User;
 import org.ethz.las.bandit.policies.ContextualBanditPolicy;
 import org.ethz.las.bandit.utils.ArrayHelper;
 import org.jblas.DoubleMatrix;
+import org.jblas.Solve;
 
 public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> {
 	private final static int SIZE = 6;
@@ -65,15 +66,14 @@ public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> 
 				A.put(article.getID(), DoubleMatrix.eye(SIZE));
 				b.put(article.getID(), DoubleMatrix.zeros(SIZE, 1));
 			}
-			DoubleMatrix Aa = new DoubleMatrix().copy(A.get(article.getID()));
-			DoubleMatrix ba = new DoubleMatrix().copy(b.get(article.getID()));
+			DoubleMatrix Aa = A.get(article.getID());
+			DoubleMatrix ba = b.get(article.getID());
 			DoubleMatrix zt = new DoubleMatrix(visitor.getFeatures());
 			
-			DoubleMatrix w = new DoubleMatrix();
-			w.copy(ba).rdiv(Aa);
+			DoubleMatrix w = Solve.solve(Aa, ba).transpose();
 			
 			double ucb = w.mmul(zt).get(0, 0);
-			ucb += ALFA * zt.transpose().rdiv(Aa).mmul(zt).get(0, 0);
+			ucb += ALFA * Math.sqrt(zt.transpose().mmul(Solve.solve(Aa, zt)).get(0, 0));
 			
 			if (ucb > maxUcb) {
 				maxArticle = article;
@@ -100,12 +100,11 @@ public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> 
 		DoubleMatrix ba = b.get(a.getID());
 		DoubleMatrix zt = new DoubleMatrix(c.getFeatures());
 		
-		DoubleMatrix zt_copy = new DoubleMatrix();
-		zt_copy.copy(zt).mmul(zt.transpose());
-		Aa.add(zt_copy);
-		
 		if (reward) {
-			ba.add(zt);
+			ba = ba.add(zt);
 		}
+		
+		zt = zt.mmul(zt.transpose());
+		Aa = Aa.add(zt);
 	}
 }
