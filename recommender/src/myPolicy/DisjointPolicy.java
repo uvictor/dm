@@ -20,6 +20,7 @@ public class DisjointPolicy implements
 	// on the CTR
 	private final static double ALFA = 3;
 	private final static double EPS = 1e-6;
+	private final static double TIME = 10000;
 
 	private Random random;
 	private int inverseSteps;
@@ -27,6 +28,9 @@ public class DisjointPolicy implements
 	private HashMap<Integer, DoubleMatrix> A;
 	private HashMap<Integer, DoubleMatrix> invA;
 	private HashMap<Integer, DoubleMatrix> b;
+
+	private HashMap<Integer, Integer> articleTime;
+	int time;
 
 	// Here you can load the article features.
 	public DisjointPolicy(String articleFilePath) {
@@ -36,11 +40,15 @@ public class DisjointPolicy implements
 		A = new HashMap<Integer, DoubleMatrix>();
 		invA = new HashMap<Integer, DoubleMatrix>();
 		b = new HashMap<Integer, DoubleMatrix>();
+
+		articleTime = new HashMap<Integer, Integer>();
+		time = 0;
 	}
 
 	@Override
 	public Article getActionToPerform(User visitor,
 			List<Article> possibleActions) {
+		time++;
 		Article maxArticle = null;
 		double maxPta = 0;
 		int maxCount = 1;
@@ -50,6 +58,7 @@ public class DisjointPolicy implements
 				A.put(article.getID(), DoubleMatrix.eye(SIZE));
 				invA.put(article.getID(), DoubleMatrix.eye(SIZE));
 				b.put(article.getID(), DoubleMatrix.zeros(SIZE, 1));
+				articleTime.put(article.getID(), time - 1);
 			}
 
 			DoubleMatrix invAa = invA.get(article.getID());
@@ -59,7 +68,10 @@ public class DisjointPolicy implements
 			DoubleMatrix thetaA = invAa.mmul(ba).transpose();
 
 			double pta = thetaA.mmul(xta).get(0, 0);
-			pta += ALFA
+			double alfa = ALFA
+					* Math.min(1,
+							TIME / (time - articleTime.get(article.getID())));
+			pta += alfa
 					* Math.sqrt(xta.transpose().mmul(invAa).mmul(xta).get(0, 0));
 
 			if (pta > maxPta) {
