@@ -16,7 +16,7 @@ import org.jblas.Solve;
 
 public class EfficientHybridPolicy implements
 		ContextualBanditPolicy<User, Article, Boolean> {
-	private final static int INVERSE_STEPS = 5;
+	private final static int INVERSE_STEPS = 20;
 	private final static int SIZE = 6;
 	private final static int SIZE2 = SIZE * SIZE;
 	private final static double ALFA = 3;
