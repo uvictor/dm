@@ -11,10 +11,11 @@ public class MyPolicy implements ContextualBanditPolicy<User, Article, Boolean> 
 
 	// Here you can load the article features.
 	public MyPolicy(String articleFilePath) {
-		//policy = new DisjointPolicy(articleFilePath);
+		policy = new DisjointPolicy(articleFilePath);
 		//policy = new HybridPolicy(articleFilePath);
 		//policy = new EfficientHybridPolicy(articleFilePath);
-		policy = new PolicyOne(articleFilePath);
+		//policy = new PolicyOne(articleFilePath);
+		//policy = new PolicyTwo(articleFilePath);
 	}
 
 	@Override
