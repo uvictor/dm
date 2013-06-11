@@ -1,0 +1,70 @@
+% Created 2013-01-28 Mon 22:41
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage[pdftex]{hyperref}
+\usepackage[font=small,labelfont=bf]{caption}
+\geometry{a4paper, textwidth=6.5in, textheight=10in, marginparsep=7pt, marginparwidth=.6in}
+
+\title{Data Mining 2013: Project Report}
+\author{marinah@student.ethz.ch\\ uvictor@student.ethz.ch\\}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Approximate retrieval - Locality Sensitive Hashing}
+\begin{enumerate}
+\item How was your choice of rows and bands motivated? How did you search for the
+best parameters? \\ \\
+\textbf{Answer}:
+
+\item Conceptually, what would you have to change if you were asked to design an image
+  retrieval system that you can query for similar images given a large image
+  dataset? \\
+
+\textbf{Answer}:
+
+\end{enumerate}
+
+\section{Large-scale Supervised Learning}
+
+\begin{enumerate}
+\item Which algorithms did you consider? Which one did you choose for the
+  final submission and why? \\ \\
+\textbf{Answer}:
+
+First we considered using Online convex programming with training samples picked at random / Stochastic Gradient Descent. We also implemented and run
+the PEGASOS algorithm. 
+
+The final solution was using OCP/SGD because it was the one that obtained better scores for our submissions. 
+
+Unfortunately, after the deadline we realised there was a bug in the code that prevented both PEGASOS and OCP/SGD from running correctly. The problem
+was the random shuffling of the order of training samples was not done correctly. This caused problems also in parameter selection.
+
+\item How did you select the parameters for your model? Which are the
+  most important parameters of your model? \\ \\
+\textbf{Answer}:
+
+We considered three parameters for the OCP/SGD solution:
+
+We tried to vary in a grid search manner possible values for the parameters, taking into account all possible combinations with:
+\end{enumerate}
+
+\section{Recommender Systems}
+
+\begin{enumerate}
+\item Which algorithm did you implement? What was your motivation? \\ \\
+\textbf{Answer}:
+
+\item How did you select the parameters for your model? \\ \\
+\textbf{Answer}:
+
+\item Does the performance measured in CTR increase monotonically during the
+execution of your algorithm? Why? \\ \\
+\textbf{Answer}:
+
+\end{enumerate}
+
+\end{document}
