@@ -25,7 +25,7 @@ public class Main {
 
     // Output log every 100 lines to standard output.
     EvaluationPolicy<User, Article, Boolean> evalPolicy = 
-    		new MyEvaluationPolicy<User, Article>(System.out, 100, 0);
+    		new MyEvaluationPolicy<User, Article>(System.out, 1000, 0);
 
     Evaluator<User, Article, Boolean> eval = 
     		new Evaluator<User, Article, Boolean>(generator, evalPolicy, policy);

@@ -14,7 +14,7 @@ import org.ethz.las.bandit.utils.ArrayHelper;
 import org.jblas.DoubleMatrix;
 import org.jblas.Solve;
 
-public class HybridPolicy implements
+public class EfficientHybridPolicy implements
 		ContextualBanditPolicy<User, Article, Boolean> {
 	private final static int INVERSE_STEPS = 20;
 	private final static int SIZE = 6;
@@ -34,9 +34,18 @@ public class HybridPolicy implements
 	private DoubleMatrix A0;
 	private DoubleMatrix invA0;
 	private DoubleMatrix b0;
+	
+	private DoubleMatrix invAa;
+	private DoubleMatrix Ba;
+	private DoubleMatrix Ba_tran;
+	private DoubleMatrix ba;
+	private DoubleMatrix xta;
+	private DoubleMatrix xta_tran;
+	private DoubleMatrix zta;
+	private DoubleMatrix zta_tran;
 
 	// Here you can load the article features.
-	public HybridPolicy(String articleFilePath) {
+	public EfficientHybridPolicy(String articleFilePath) {
 		random = new Random();
 		inverseSteps = 0;
 
@@ -84,31 +93,35 @@ public class HybridPolicy implements
 		DoubleMatrix beta = invA0.mmul(b0);
 
 		for (Article article : possibleActions) {
-			if (!A.containsKey(article.getID())) {
+			if (!A.containsKey(article)) {
 				A.put(article.getID(), DoubleMatrix.eye(SIZE));
 				B.put(article.getID(), DoubleMatrix.zeros(SIZE, SIZE2));
 				invA.put(article.getID(), DoubleMatrix.eye(SIZE));
 				b.put(article.getID(), DoubleMatrix.zeros(SIZE));
 			}
 
-			DoubleMatrix invAa = invA.get(article.getID());
-			DoubleMatrix Ba = B.get(article.getID());
-			DoubleMatrix Ba_tran = Ba.transpose();
-			DoubleMatrix ba = b.get(article.getID());
-			DoubleMatrix xta = new DoubleMatrix(visitor.getFeatures());
-			DoubleMatrix xta_tran = xta.transpose();
-			DoubleMatrix zta = xta.mmul(z.get(article.getID()).transpose())
+			invAa = invA.get(article.getID());
+			Ba = B.get(article.getID());
+			Ba_tran = Ba.transpose();
+			ba = b.get(article.getID());
+			xta = new DoubleMatrix(visitor.getFeatures());
+			xta_tran = xta.transpose();
+			zta = xta.mmul(z.get(article.getID()).transpose())
 					.reshape(SIZE2, 1);
-			DoubleMatrix zta_tran = zta.transpose();
+			zta_tran = zta.transpose();
 
 			DoubleMatrix thetaA = invAa.mmul(ba.sub(Ba.mmul(beta)));
 
-			double sta = zta_tran.mmul(invA0).mmul(zta).get(0, 0);
-			sta -= 2 * zta_tran.mmul(invA0).mmul(Ba_tran).mmul(invAa).mmul(xta)
-					.get(0, 0);
-			sta += xta_tran.mmul(invAa).mmul(xta).get(0, 0);
-			sta += xta_tran.mmul(invAa).mmul(Ba).mmul(invA0).mmul(Ba_tran)
-					.mmul(invAa).mmul(xta).get(0, 0);
+			// "Cache" matrices
+			DoubleMatrix ztaT_invA0 = zta_tran.mmul(invA0);
+			DoubleMatrix xtaT_invAa = xta_tran.mmul(invAa);
+			DoubleMatrix BaT_invAa_xta = Ba_tran.mmul(invAa).mmul(xta);
+
+			double sta = ztaT_invA0.mmul(zta).get(0, 0);
+			sta -= 2 * ztaT_invA0.mmul(BaT_invAa_xta).get(0, 0);
+			sta += xtaT_invAa.mmul(xta).get(0, 0);
+			sta += xtaT_invAa.mmul(Ba).mmul(invA0)
+					.mmul(BaT_invAa_xta).get(0, 0);
 
 			double pta = zta_tran.mmul(beta).get(0, 0);
 			pta += xta_tran.mmul(thetaA).get(0, 0);
@@ -136,27 +149,28 @@ public class HybridPolicy implements
 	@Override
 	public void updatePolicy(User c, Article a, Boolean reward) {
 		DoubleMatrix Aa = A.get(a.getID());
-		DoubleMatrix invAa = invA.get(a.getID());
-		DoubleMatrix Ba = B.get(a.getID());
-		DoubleMatrix Ba_tran = Ba.transpose();
-		DoubleMatrix ba = b.get(a.getID());
-		DoubleMatrix xta = new DoubleMatrix(c.getFeatures());
-		DoubleMatrix xta_tran = xta.transpose();
-		DoubleMatrix zta = xta.mmul(z.get(a.getID()).transpose()).reshape(
-				SIZE2, 1);
-		DoubleMatrix zta_tran = zta.transpose();
+		
+		// "Cache" matrices
+		DoubleMatrix BaT_invA = Ba_tran.mmul(invAa);
+		DoubleMatrix BaT_invA_Ba = BaT_invA.mmul(Ba);
+		DoubleMatrix BaT_invA_ba = BaT_invA.mmul(ba);
 
-		A0 = A0.add(Ba_tran.mmul(invAa).mmul(Ba));
-		b0 = b0.add(Ba_tran.mmul(invAa).mmul(ba));
+		A0 = A0.add(BaT_invA_Ba);
+		b0 = b0.add(BaT_invA_ba);
 		Aa = Aa.add(xta.mmul(xta_tran));
 		Ba = Ba.add(xta.mmul(zta_tran));
-		A0 = A0.add(zta.mmul(zta_tran)).sub(Ba_tran.mmul(invAa).mmul(Ba));
-
+		
+		// "Cache" matrices
+		BaT_invA = Ba_tran.mmul(invAa);
+		BaT_invA_Ba = BaT_invA.mmul(Ba);
+		
+		A0 = A0.add(zta.mmul(zta_tran)).sub(BaT_invA_Ba);
 		if (reward) {
 			ba = ba.add(xta);
 			b0 = b0.add(zta);
 		}
-		b0 = b0.sub(Ba_tran.mmul(invAa).mmul(ba));
+		BaT_invA_ba = BaT_invA.mmul(ba);
+		b0 = b0.sub(BaT_invA_ba);
 
 		inverseSteps++;
 		if (inverseSteps >= INVERSE_STEPS) {

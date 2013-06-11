@@ -2,6 +2,8 @@ package myPolicy;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -14,7 +16,7 @@ import org.ethz.las.bandit.utils.ArrayHelper;
 import org.jblas.DoubleMatrix;
 import org.jblas.Solve;
 
-public class HybridPolicy implements
+public class PolicyOne implements
 		ContextualBanditPolicy<User, Article, Boolean> {
 	private final static int INVERSE_STEPS = 20;
 	private final static int SIZE = 6;
@@ -31,12 +33,44 @@ public class HybridPolicy implements
 	private HashMap<Integer, DoubleMatrix> B;
 	private HashMap<Integer, DoubleMatrix> b;
 
+	// <UserID, <ArticleID, pta>>
+	private HashMap<Integer, HashMap<Integer, PtaDirty>> PTA;
+	// <ArticleID, ArrayList<pta>>
+	private HashMap<Integer, ArrayList<PtaDirty>> articleList;
+
 	private DoubleMatrix A0;
 	private DoubleMatrix invA0;
 	private DoubleMatrix b0;
 
+	private class PtaDirty {
+		private double pta;
+		private boolean dirty;
+
+		public PtaDirty(double pta) {
+			this.pta = pta;
+			this.dirty = true;
+		}
+
+		public double getPta() {
+			return pta;
+		}
+
+		public void setPta(double pta) {
+			this.pta = pta;
+			this.dirty = false;
+		}
+
+		public boolean isDirty() {
+			return dirty;
+		}
+
+		public void setDirty() {
+			this.dirty = true;
+		}
+	}
+
 	// Here you can load the article features.
-	public HybridPolicy(String articleFilePath) {
+	public PolicyOne(String articleFilePath) {
 		random = new Random();
 		inverseSteps = 0;
 
@@ -45,6 +79,9 @@ public class HybridPolicy implements
 		invA = new HashMap<Integer, DoubleMatrix>();
 		B = new HashMap<Integer, DoubleMatrix>();
 		b = new HashMap<Integer, DoubleMatrix>();
+
+		PTA = new HashMap<Integer, HashMap<Integer, PtaDirty>>();
+		articleList = new HashMap<Integer, ArrayList<PtaDirty>>();
 
 		A0 = DoubleMatrix.eye(SIZE2);
 		invA0 = DoubleMatrix.eye(SIZE2);
@@ -74,6 +111,40 @@ public class HybridPolicy implements
 		}
 	}
 
+	private int hashUser(User u) {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(u.getFeatures());
+		return result;
+	}
+
+	private double computePTA(DoubleMatrix beta, User visitor, Article article) {
+		DoubleMatrix invAa = invA.get(article.getID());
+		DoubleMatrix Ba = B.get(article.getID());
+		DoubleMatrix Ba_tran = Ba.transpose();
+		DoubleMatrix ba = b.get(article.getID());
+		DoubleMatrix xta = new DoubleMatrix(visitor.getFeatures());
+		DoubleMatrix xta_tran = xta.transpose();
+		DoubleMatrix zta = xta.mmul(z.get(article.getID()).transpose())
+				.reshape(SIZE2, 1);
+		DoubleMatrix zta_tran = zta.transpose();
+
+		DoubleMatrix thetaA = invAa.mmul(ba.sub(Ba.mmul(beta)));
+
+		double sta = zta_tran.mmul(invA0).mmul(zta).get(0, 0);
+		sta -= 2 * zta_tran.mmul(invA0).mmul(Ba_tran).mmul(invAa).mmul(xta)
+				.get(0, 0);
+		sta += xta_tran.mmul(invAa).mmul(xta).get(0, 0);
+		sta += xta_tran.mmul(invAa).mmul(Ba).mmul(invA0).mmul(Ba_tran)
+				.mmul(invAa).mmul(xta).get(0, 0);
+
+		double pta = zta_tran.mmul(beta).get(0, 0);
+		pta += xta_tran.mmul(thetaA).get(0, 0);
+		pta += ALFA * Math.sqrt(sta);
+
+		return pta;
+	}
+
 	@Override
 	public Article getActionToPerform(User visitor,
 			List<Article> possibleActions) {
@@ -83,37 +154,37 @@ public class HybridPolicy implements
 
 		DoubleMatrix beta = invA0.mmul(b0);
 
+		Integer userHash = new Integer(hashUser(visitor));
+		HashMap<Integer, PtaDirty> userArticles = PTA.get(userHash);
+		if (userArticles == null) {
+			userArticles = new HashMap<Integer, PtaDirty>();
+			PTA.put(userHash, userArticles);
+		}
+
 		for (Article article : possibleActions) {
 			if (!A.containsKey(article.getID())) {
 				A.put(article.getID(), DoubleMatrix.eye(SIZE));
 				B.put(article.getID(), DoubleMatrix.zeros(SIZE, SIZE2));
 				invA.put(article.getID(), DoubleMatrix.eye(SIZE));
 				b.put(article.getID(), DoubleMatrix.zeros(SIZE));
+
+				if (!articleList.containsKey(article.getID())) {
+					articleList.put(article.getID(), new ArrayList<PtaDirty>());
+				}
+			}
+			
+			PtaDirty ptaDirty = userArticles.get(article.getID());
+			if (ptaDirty == null) {
+				ptaDirty = new PtaDirty(computePTA(beta, visitor, article));
+				userArticles.put(article.getID(), ptaDirty);
+				articleList.get(article.getID()).add(ptaDirty);
+			}
+			
+			if (ptaDirty.isDirty()) {
+				ptaDirty.setPta(computePTA(beta, visitor, article));
 			}
 
-			DoubleMatrix invAa = invA.get(article.getID());
-			DoubleMatrix Ba = B.get(article.getID());
-			DoubleMatrix Ba_tran = Ba.transpose();
-			DoubleMatrix ba = b.get(article.getID());
-			DoubleMatrix xta = new DoubleMatrix(visitor.getFeatures());
-			DoubleMatrix xta_tran = xta.transpose();
-			DoubleMatrix zta = xta.mmul(z.get(article.getID()).transpose())
-					.reshape(SIZE2, 1);
-			DoubleMatrix zta_tran = zta.transpose();
-
-			DoubleMatrix thetaA = invAa.mmul(ba.sub(Ba.mmul(beta)));
-
-			double sta = zta_tran.mmul(invA0).mmul(zta).get(0, 0);
-			sta -= 2 * zta_tran.mmul(invA0).mmul(Ba_tran).mmul(invAa).mmul(xta)
-					.get(0, 0);
-			sta += xta_tran.mmul(invAa).mmul(xta).get(0, 0);
-			sta += xta_tran.mmul(invAa).mmul(Ba).mmul(invA0).mmul(Ba_tran)
-					.mmul(invAa).mmul(xta).get(0, 0);
-
-			double pta = zta_tran.mmul(beta).get(0, 0);
-			pta += xta_tran.mmul(thetaA).get(0, 0);
-			pta += ALFA * Math.sqrt(sta);
-
+			double pta = ptaDirty.getPta();
 			if (pta > maxPta) {
 				maxArticle = article;
 				maxPta = pta;
@@ -163,6 +234,10 @@ public class HybridPolicy implements
 			invA0 = Solve.solve(A0, DoubleMatrix.eye(SIZE2));
 			invA.put(a.getID(), Solve.solve(Aa, DoubleMatrix.eye(SIZE)));
 			inverseSteps = 0;
+		}
+		
+		for (PtaDirty ptaDirty : articleList.get(a.getID())) {
+			ptaDirty.setDirty();
 		}
 	}
 }
