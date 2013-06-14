@@ -53,7 +53,6 @@ force to consider the average over multiple runs).
 \item Conceptually, what would you have to change if you were asked to design
 an image retrieval system that you can query for similar images given a large
 image dataset? \\
-
 \textbf{Answer}:
 We can try to apply the same technique - Locality Sensitive Hashing. We need to
 define "shingles" for images. We will call "shingles" for images as visual
@@ -102,12 +101,11 @@ better scores for our submissions.
 Unfortunately, after the deadline we realised there was a bug in the code that
 prevented both PEGASOS and OCP/SGD from running correctly. The problem was the
 random shuffling of the order of training samples was not done correctly. This
-caused problems also in parameter selection. It's likely that multiple patches
-will be mapped to the same visual words, so we will not map an image to all
-visual words.
+caused problems also in parameter selection.
 
 \item How did you select the parameters for your model? Which are the
   most important parameters of your model? \\
+
 \textbf{Answer}:
 
 We considered three parameters for the OCP/SGD solution: 
@@ -145,11 +143,11 @@ algorithm in case things don't go as expected.
 Afterwards, we implemented LinUCB hybrid from which we expected and also got
 alot better results (given that we were rewarded on average for at most 5\% of
 the total number of clicked articles). However, we had to work alot on reducing
-the complexity of the algorithm (because we had exceeded the give time limit of
+the complexity of the algorithm (because we had exceeded the given time limit of
 one hour). Initially we tried a couple of different coding optimisations and we
 also had to solve some hard to find bugs. After this, our pitfall was that we
 attempted a too strong cacheing mechanism that would cache matrices for all
-possible of users and articles - which of course is a very naive and infeasible
+possible sets of users and articles - which of course is a very naive and infeasible
 thing to do on a large scale - and exceeded the memory bound of 512MB. In the
 end, we settled for the more reasonable caching scheme, that only considers
 matrices dependent only on the article (and not also on the user).
@@ -159,7 +157,7 @@ for the disjoint and hybrid versions), but were unable to do so in a valuable
  way. For further comments on these time considerations please refer to the
  answer of the last question.
 
-\item How did you select the parameters for your model?
+\item How did you select the parameters for your model? \\
 \textbf{Answer}:
 Because of the high time complexity of the algorithm and, as such, actual
 real-world time constraints it would have been too time consuming to do
@@ -185,9 +183,9 @@ for a final value of 20. We should note that it is in our interest from a
 execution of your algorithm? Why? \\
 \textbf{Answer}:
 The behaviour of the algorithm as a measure of CTR osciallates in the long term
-similar to an constanta increasing function compoased with a sinusoid. The
+similar to a constantly increasing function composed with a sinusoid. The
 increase in CTR is expected as the algorithm learns more and more. However, the
-unwanted osciallation are much more interesting effect as they seem unexpected
+unwanted osciallations are a much more interesting effect as they seem unexpected
 at a first glance. We attributed these osciallation to old articles that are
 being repeated and that have no value for the user (as the user might already
 be familiar with that information).
