@@ -16,72 +16,186 @@
 
 \section{Approximate retrieval - Locality Sensitive Hashing}
 \begin{enumerate}
-\item How was your choice of rows and bands motivated? How did you search for the
-best parameters? \\ \\
+\item How was your choice of rows and bands motivated? How did you search for
+the best parameters? \\
 \textbf{Answer}:
+While it was clear (from theory) that a maximal number of hash function would
+yield better results and, as such, tried to use a number as close to 120 (the
+imposed limit) as possible, the split between rows R and bands B was an open
+question initially.
 
-\item Conceptually, what would you have to change if you were asked to design an image
-  retrieval system that you can query for similar images given a large image
-  dataset? \\
+To choose the optimal values for R and B we have to consider the properties of
+the resulting plot in the similarity, probability space of:
+$$ f(s) = 1 - (1 - (s^r)^b) $$
+Given that we are trying to find documents that have at least 0.8 similarity let us define:
+$$ FP = \int_0^{0.8} f(p) \mathrm{d}x $$
+$$ FN = 1 - \int_{0.8}^1 f(p) \mathrm{d}x $$
+where A represents the false positive error and B represents the false negative
+error.  Because we are interested in minimizing the total error of both false
+positives and false negatives we want to minimize $sum = FP + FN$, and because
+(as the assignment asks) we are also interested in balancing false positives
+and false negatives (have them as a number as close as possible) we are also
+interested in finding a ratio $ratio = FP / FN$ that is as close as possible to 1.
+
+Using the integrals and equations presented above we tuned our parameters until
+we reached the optimal parameters of B = 9 and R = 13 (for a total of 117 hash
+functions) that slightly outperforms a choice of B = 10 and R = 12 when
+computing the values for the sum and ratio defined above.
+
+Unfortunately, the testing of the application was unstable as there wasn't any
+averaging set in-place and, as such, to go up in ranking we arbitrarily
+selected different SEED values for our random generator until we achieved our
+goal. In the end, the theoretical approach described above, which we initially
+tried, didn't help us to get a good ranking, but it helped us to understand how
+you would approach this problem in a real world setting (where you would be
+force to consider the average over multiple runs).
+
+\item Conceptually, what would you have to change if you were asked to design
+an image retrieval system that you can query for similar images given a large
+image dataset? \\
 
 \textbf{Answer}:
-
 We can try to apply the same technique - Locality Sensitive Hashing. We need to
-define "shingles" for images. We will call "shingles" for images as visual words. One way to extract visual words is to put a grid over a image and fragment the image in a set of rectangular patches. Now we could represent each image as a set of visual words: the patches extracted from the grid. By doing this we loose
-locality information, like the position of the patch in the image, but it 
-simplfies dealing with the task.
+define "shingles" for images. We will call "shingles" for images as visual
+words. One way to extract visual words is to put a grid over a image and
+fragment the image in a set of rectangular patches. Now we could represent each
+image as a set of visual words: the patches extracted from the grid. By doing
+this we loose locality information, like the position of the patch in the
+image, but it simplfies dealing with the task.
 
-Now if we consider all distinct visual words to be the shingles, we will probably have very few shingles that occur in multiple images, due to differences in lighting, grid overlay, contrast, etc. One way of extracting better visual words is to clusterize them, using k-means, and use the centers of each cluster as the new visual words. 
+Now if we consider all distinct visual words to be the shingles, we will
+probably have very few shingles that occur in multiple images, due to
+differences in lighting, grid overlay, contrast, etc. One way of extracting
+better visual words is to clusterize them, using k-means, and use the centers
+of each cluster as the new visual words. 
 
-After we obtain the visual words by clustering, as described above, we can create the shingle matrix. For each image, we cover it with a grid that fragments the image in rectangular patches. Each patch can be mapped to a nearest visual word
-(cluster center). Thus we obtain a set of visual words for each image. Thus similar images should contain many common visual words. It is also more probable that we introduce some false positives. This is because some patches may not be well represented by any of the visual words. To eliminate these, we can set a threshold such that a patch that has similarity to all visual words below a threshold is not considered for constructing the shingle matrix.
+After we obtain the visual words by clustering, as described above, we can
+create the shingle matrix. For each image, we cover it with a grid that
+fragments the image in rectangular patches. Each patch can be mapped to a
+nearest visual word (cluster center). Thus we obtain a set of visual words for
+each image. Thus similar images should contain many common visual words. It is
+also more probable that we introduce some false positives. This is because some
+patches may not be well represented by any of the visual words. To eliminate
+these, we can set a threshold such that a patch that has similarity to all
+visual words below a threshold is not considered for constructing the shingle
+matrix.
 
-As an example, applying this technique for a set of images containing cars and emtpy streets we would expect that clustering identifies visual words that contain car parts: windows, wheels, doors, and also visual words showing the empty street, etc.
+As an example, applying this technique for a set of images containing cars and
+emtpy streets we would expect that clustering identifies visual words that
+contain car parts: windows, wheels, doors, and also visual words showing the
+empty street, etc.
 
 \end{enumerate}
 
 \section{Large-scale Supervised Learning}
 
-\begin{enumerate}
-\item Which algorithms did you consider? Which one did you choose for the
-  final submission and why? \\ \\
+\begin{enumerate} \item Which algorithms did you consider? Which one did you
+choose for the final submission and why? \\
 \textbf{Answer}:
+First we considered using Online Convex Programming with training samples
+picked at random / Stochastic Gradient Descent. We also implemented and run the
+PEGASOS algorithm. 
 
-First we considered using Online convex programming with training samples picked at random / Stochastic Gradient Descent. We also implemented and run
-the PEGASOS algorithm. 
+The final solution was using OCP/SGD because it was the one that obtained
+better scores for our submissions. 
 
-The final solution was using OCP/SGD because it was the one that obtained better scores for our submissions. 
-
-Unfortunately, after the deadline we realised there was a bug in the code that prevented both PEGASOS and OCP/SGD from running correctly. The problem
-was the random shuffling of the order of training samples was not done correctly. This caused problems also in parameter selection. It's likely that multiple patches will be mapped to the same visual words, so we will not map an image to all visual words.
+Unfortunately, after the deadline we realised there was a bug in the code that
+prevented both PEGASOS and OCP/SGD from running correctly. The problem was the
+random shuffling of the order of training samples was not done correctly. This
+caused problems also in parameter selection. It's likely that multiple patches
+will be mapped to the same visual words, so we will not map an image to all
+visual words.
 
 \item How did you select the parameters for your model? Which are the
-  most important parameters of your model? \\ \\
+  most important parameters of your model? \\
 \textbf{Answer}:
 
 We considered three parameters for the OCP/SGD solution: 
 \begin{itemize}
 \item $K$
 \item $Lambda$ 
-\item the learning rate $\eta$.
+\item the learning rate $\eta$
 \end{itemize}
 
-We tried to vary in a grid search manner possible values for the parameters, taking into account all possible combinations with: $K \in \{32, 64, 120\}, Lambda \in \{0.03, 0.1, 0.3\}$ and $\eta \in \{0.03, 0.1, 0.3\}$. We used cross-validation to determine the best combination of parameter values.
+We tried to vary in a grid search manner possible values for the parameters,
+taking into account all possible combinations with:
+\begin{itemize}
+\item $K \in \{32, 64, 120\}$
+\item $\lambda \in \{0.03, 0.1, 0.3\}$
+\item $\eta \in \{0.03, 0.1, 0.3\}$
+\end{itemize}
+We used cross-validation to determine the best combination of parameter values.
 
 \end{enumerate}
 
 \section{Recommender Systems}
 
 \begin{enumerate}
-\item Which algorithm did you implement? What was your motivation? \\ \\
+\item Which algorithm did you implement? What was your motivation? \\
 \textbf{Answer}:
+We first implemented LinUCB disjoint, because we knew from the course that UCB1
+has poorer results while it isn't much easier to implement. In other words,
+LinUCB in the disjoint variant seemed a good and safe trade-off between the
+implementation complexity and its results. This was also a choice made such
+that we would have quick baseline with which to compare other algorithms.
+Another aspect was that we expected LinUCB hybrid to be a lot more
+computationally intensive and, as such, we wanted to have a guaranteed
+algorithm in case things don't go as expected.
 
-\item How did you select the parameters for your model? \\ \\
+Afterwards, we implemented LinUCB hybrid from which we expected and also got
+alot better results (given that we were rewarded on average for at most 5\% of
+the total number of clicked articles). However, we had to work alot on reducing
+the complexity of the algorithm (because we had exceeded the give time limit of
+one hour). Initially we tried a couple of different coding optimisations and we
+also had to solve some hard to find bugs. After this, our pitfall was that we
+attempted a too strong cacheing mechanism that would cache matrices for all
+possible of users and articles - which of course is a very naive and infeasible
+thing to do on a large scale - and exceeded the memory bound of 512MB. In the
+end, we settled for the more reasonable caching scheme, that only considers
+matrices dependent only on the article (and not also on the user).
+
+In the end, we tried to add time considerations into our LinUCB formulas (both
+for the disjoint and hybrid versions), but were unable to do so in a valuable
+ way. For further comments on these time considerations please refer to the
+ answer of the last question.
+
+\item How did you select the parameters for your model?
 \textbf{Answer}:
+Because of the high time complexity of the algorithm and, as such, actual
+real-world time constraints it would have been too time consuming to do
+cross-validation. Consequently, we attempted to optimze each parameter
+individually.
+
+As mentioned also in the course, although a real high value for $\alpha$ is
+required from a theoretical perspective, in practice these high values are not
+usually necessary. We confirmed these conjecture in practice and observed that
+increasing the value of $\alpha$ above 3 didn't have an (a positive) impact on
+the CTR. Accordingly, we settled for an $\alpha$ value of 3. We should mention
+that we also modified this value afterwards, but were unable to improve the
+results.
+
+Another important parameter for us was INVERSE\_STEPS which specifies the
+number of updates after which we recomputes the matrices' inverse. Increasing
+this parameter above 20 resulted in poorer CTR values and, as such, we settle
+for a final value of 20. We should note that it is in our interest from a
+ computational perspective to have this value as high as possible, while still
+ maintaining an optimal CTR - quality over performance.
 
 \item Does the performance measured in CTR increase monotonically during the
-execution of your algorithm? Why? \\ \\
+execution of your algorithm? Why? \\
 \textbf{Answer}:
+The behaviour of the algorithm as a measure of CTR osciallates in the long term
+similar to an constanta increasing function compoased with a sinusoid. The
+increase in CTR is expected as the algorithm learns more and more. However, the
+unwanted osciallation are much more interesting effect as they seem unexpected
+at a first glance. We attributed these osciallation to old articles that are
+being repeated and that have no value for the user (as the user might already
+be familiar with that information).
+
+Considering that users lose interest in old articles we attempted to take into
+account the difference between the timestamp of the article and the current
+time (the time when we have to present an article to a user) into our equations.
+Unfortunately, we were unsuccessful in our attempts.
 
 \end{enumerate}
 
