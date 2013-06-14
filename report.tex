@@ -47,9 +47,10 @@ was the random shuffling of the order of training samples was not done correctly
   most important parameters of your model? \\ \\
 \textbf{Answer}:
 
-We considered three parameters for the OCP/SGD solution:
+We considered three parameters for the OCP/SGD solution: $K, Lambda$ and the learning rate $\eta$.
 
-We tried to vary in a grid search manner possible values for the parameters, taking into account all possible combinations with:
+We tried to vary in a grid search manner possible values for the parameters, taking into account all possible combinations with: $K \in \{32, 64, 120\}, Lambda \in \{0.03, 0.1, 0.3\}$ and $\eta \in \{0.03, 0.1, 0.3\}$. We used cross-validation to determine the best combination of parameter values.
+
 \end{enumerate}
 
 \section{Recommender Systems}
