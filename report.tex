@@ -34,7 +34,7 @@ simplfies dealing with the task.
 Now if we consider all distinct visual words to be the shingles, we will probably have very few shingles that occur in multiple images, due to differences in lighting, grid overlay, contrast, etc. One way of extracting better visual words is to clusterize them, using k-means, and use the centers of each cluster as the new visual words. 
 
 After we obtain the visual words by clustering, as described above, we can create the shingle matrix. For each image, we cover it with a grid that fragments the image in rectangular patches. Each patch can be mapped to a nearest visual word
-(cluster center). Thus we obtain a set of shingles for each image. Thus similar images should contain similar visual words. It is also more probable that we introduce some false positives. This is because some patches may not be well represented by any of the visual words. To eliminate these, we can set a threshold such that a patch that has similarity to all visual words below a threshold, is not considered for constructing the shingle matrix.
+(cluster center). Thus we obtain a set of visual words for each image. Thus similar images should contain many common visual words. It is also more probable that we introduce some false positives. This is because some patches may not be well represented by any of the visual words. To eliminate these, we can set a threshold such that a patch that has similarity to all visual words below a threshold is not considered for constructing the shingle matrix.
 
 As an example, applying this technique for a set of images containing cars and emtpy streets we would expect that clustering identifies visual words that contain car parts: windows, wheels, doors, and also visual words showing the empty street, etc.
 
